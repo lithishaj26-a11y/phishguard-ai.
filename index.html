@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard AI — Spot Suspicious Messages Before You Click</title>
+  <meta name="description" content="PhishGuard AI is a student-built tool that highlights warning signs in suspicious emails and messages. Rule-based demo, runs fully in your browser." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://w3.org' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23071628'/%3E%3Cpath d='M12 4.8l6.2 2.4v4.5c0 3.5-2.5 6.5-6.2 7.5-3.7-1-6.2-4-6.2-7.5V7.2L12 4.8z' fill='%2338bdf8'/%3E%3C/svg%3E" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --navy-950: #040d19;
+      --navy-900: #071628;
+      --navy-800: #0b2138;
+      --navy-700: #12304d;
+      --line: #1b3a58;
+      --cyan: #38bdf8;
+      --cyan-strong: #0ea5e9;
+      --ink: #0e1d31;
+      --muted: #5a6b82;
+      --card: #ffffff;
+      --soft: #f5f8fc;
+      --border-soft: #dde7f2;
+      --high: #dc2626;
+      --high-bg: #fef2f2;
+      --med: #b45309;
+      --med-bg: #fffbeb;
+      --low: #047857;
+      --low-bg: #ecfdf5;
+      --radius: 16px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: #e9f1fa;
+      line-height: 1.6;
+      background-color: var(--navy-900);
+      background-image:
+        radial-gradient(800px at 10% 10%, rgba(56, 189, 248, 0.12), transparent 70%),
+        radial-gradient(600px at 90% 80%, rgba(37, 99, 235, 0.15), transparent 70%);
+      background-attachment: fixed;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 22, 40, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .logo svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--cyan);
+    }
+
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--cyan);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 1rem 0;
+      letter-spacing: -0.025em;
+    }
+
+    .hero h1 span {
+      color: var(--cyan);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: #94a3b8;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--cyan);
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      color: var(--ink);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border-bottom: 2px solid var(--border-soft);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--navy-800);
+    }
+
+    textarea {
+      width: 100%;
+      height: 220px;
+      border: 2px solid var(--border-soft);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--cyan-strong);
+    }
+
+    .btn {
+      width: 100%;
+      background: var(--navy-900);
+      color: #ffffff;
+      border: none;
+      padding: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover {
+      background: var(--navy-800);
+    }
+
+    .btn:active {
+      transform: scale(0.99);
+    }
+
+    .samples-box h3 {
+      font-size: 1rem;
+      margin: 0 0 0.75rem 0;
+      color: var(--muted);
+    }
+
+    .sample-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: var(--soft);
+      border: 1px solid var(--border-soft);
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s, border-color 0.2s;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--navy-700);
+      font-weight: 500;
+    }
+
+    .sample-btn:hover {
+      background: #e2ecf7;
+      border-color: #cbdbe5;
+    }
+
+    /* Results Section Styling */
+    .result-container {
+      display: none;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-panel {
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-panel.risk-high { background: var(--high-bg); color: var(--high); border: 1px solid #fee2e2; }
+    .status-panel.risk-med { background: var(--med-bg); color: var(--med); border: 1px solid #fef3c7; }
+    .status-panel.risk-low { background: var(--low-bg); color: var(--low); border: 1px solid #d1fae5; }
+
+    .status-icon {
+      font-size: 2rem;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .status-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .status-desc {
+      margin: 0.25rem 0 0 0;
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .findings-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy-900);
+      margin: 1.5rem 0 0.75rem 0;
+    }
+
+    .finding-item {
+      background: var(--soft);
+      border-left: 4px solid var(--muted);
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .finding-item.danger { border-left-color: var(--high); }
+    .finding-item.warning { border-left-color: var(--med); }
+
+    .finding-tag {
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    .finding-item.danger .finding-tag { color: var(--high); }
+    .finding-item.warning .finding-tag { color: var(--med); }
+
+    .finding-text {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--navy-800);
+    }
+
+    .advice-list {
+      margin: 0;
+      padding-left: 1.25rem;
+      color: var(--navy-700);
+    }
+
+    .advice-list li {
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .disclaimer-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* About Section */
+    .about-section {
+      background: rgba(11, 33, 56, 0.6);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 3rem;
+      margin-top: 4rem;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .about-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .about-section { padding: 2rem 1.5rem; }
+    }
+
+    .about-column h3 {
+      color: var(--cyan);
+      margin-top: 0;
+      font-size: 1.3rem;
+    }
+
+    .about-column p, .about-column li {
+      color: #cbd5e1;
+      font-size: 1rem;
+    }
+
+    .about-column ul {
+      padding-left: 1.25rem;
+    }
+
+    .about-column li {
+      margin-bottom: 0.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      font-size: 0.9rem;
+      border-top: 1px solid var(--line);
+      margin-top: 4rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <svg viewBox="0 0 24 24"><path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm0 18c-3.75-1-6-4.16-6-7.5V8.37l6-2.33 6 2.33V12.5c0 3.34-2.25 6.5-6 7.5z"/></svg>
+        PhishGuard AI
+      </a>
+      <nav>
+        <a href="#scanner">Scanner</a>
+        <a href="#about">About Project</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+     
+      <h1>Spot Suspicious Messages <span>Before You Click</span></h1>
+      <p>A rule-based educational simulator designed to flag urgent demands, fake support hooks, and dangerous request patterns hidden inside communications.</p>
+    </section>
+
+    <div class="grid" id="scanner">
+      <!-- Input Panel -->
+      <div class="card">
+        <h2>
+Message Scanner</h2>
+
+<label for="message">Paste your suspicious message</label>
+<textarea id="message" placeholder="Paste your message here..."></textarea>
+
+<button id="checkBtn">Check Message</button>
+<div id="result"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById("checkBtn").addEventListener("click", async function () {
+      const message = document.getElementById("message").value.trim();
+      const resultBox = document.getElementById("result");
+
+      if (!message) {
+        resultBox.textContent = "Please enter a message first.";
+        return;
+      }
+
+      resultBox.textContent = "Analyzing...";
+
+      try {
+        const response = await fetch("/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message: message })
+        });
+
+        const data = await response.json();
+        resultBox.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resultBox.textContent = "Could not connect to the backend.";
+      }
+    });
+  </script>
+</body>
+</html>
